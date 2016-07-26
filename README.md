@@ -2,13 +2,15 @@ This uses the Tweepy API, which can be found [here](http://docs.tweepy.org/en/v3
 
 Before Getting Any Friends and Followers:
 =
-1.) Get a Twitter API key [here](https://apps.twitter.com/app/new).  Fill in **twitter_scripts/config/twitter_config.txt** with the access keys/tokens/secrets.  Twitter rate limits each key separately, so you can generate multiple access keys and save them in multiple .txt files if you want do multiple things at once.
+1.) Setup tweepy by navigating to **/tweepy** and running the command `python setup.py`.
 
-2.) Put a .csv file with two columns, Twitter screen name and Twitter user id (in that order) in the **twitter_scripts_/data/** directory.  Name the spreadsheet **usernames.csv**.
+2.) Get a Twitter API key [here](https://apps.twitter.com/app/new).  Fill in **twitter_scripts/config/twitter_config.txt** with the access keys/tokens/secrets.  Twitter rate limits each key separately, so you can generate multiple access keys and save them in multiple .txt files if you want do multiple things at once.
 
-3.) In the terminal window, navigate to the **twitter_scripts** directory and run the command `python csv_to_json.py`.  This will reformat the .csv file as a .json file.
+3.) Put a .csv file with two columns, Twitter screen name and Twitter user id (in that order) in the **twitter_scripts_/data/** directory.  Name the spreadsheet **usernames.csv**.
 
-4.) Run the command `python get_user_data.py config/twitter_config.txt`.  This will pull data about each user on the spreadsheet from Twitter.
+4.) In the terminal window, navigate to the **twitter_scripts** directory and run the command `python csv_to_json.py`.  This will reformat the .csv file as a .json file.
+
+5.) Run the command `python get_user_data.py config/twitter_config.txt`.  This will pull data about each user on the spreadsheet from Twitter.
 
 Follower and Following Relations
 =
