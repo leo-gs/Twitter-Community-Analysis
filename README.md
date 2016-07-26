@@ -2,7 +2,7 @@ This uses the Tweepy API, which can be found [here](http://docs.tweepy.org/en/v3
 
 Before Getting Any Friends and Followers:
 =
-1.) Setup tweepy by navigating to **/tweepy** and running the command `python setup.py`.
+1.) Setup tweepy by navigating to **tweepy** and running the command `python setup.py`.
 
 2.) Get a Twitter API key [here](https://apps.twitter.com/app/new).  Fill in **twitter_scripts/config/twitter_config.txt** with the access keys/tokens/secrets.  Twitter rate limits each key separately, so you can generate multiple access keys and save them in multiple .txt files if you want do multiple things at once.
 
