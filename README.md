@@ -1,6 +1,6 @@
 This uses the Tweepy API, which can be found [here](http://docs.tweepy.org/en/v3.5.0/api.html).
 
-Before Getting Any Friends and Followers:
+Before Getting Any Friends and Followers
 =
 1.) Setup tweepy by navigating to **tweepy** and running the command `python setup.py`.
 
@@ -25,3 +25,7 @@ Run the command `python make_union_and_intersection_weights.py`.  This will outp
 - **data/weights_followers.csv**: shared followers
 - **data/weights_friends.csv**: shared friends
 - **data/weights.csv**: shared friends and followers
+
+Getting Retweets
+=
+Given a csv with a list of tweet ids, this script gets the retweet count for each tweet.  If the tweet data can not be found, the cell in the retweets column will be empty.  Duplicate tweet ids will be removed from the output spreadsheet.  To get rewteet counts, run the command `python get_retweets_by_tweet_ids.py data/input.csv config/tweetids.txt`, where **tweetids.csv** is the a csv spreadsheet with tweet ids in the first column.  The output will be a csv file **data/tweetids_retweets.csv**.  You don't need to run any other scripts before running this script, but you do need a Twitter API key as described in step 2 above.
