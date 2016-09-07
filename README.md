@@ -1,4 +1,4 @@
-This uses the Tweepy API, which can be found [here](http://docs.tweepy.org/en/v3.5.0/api.html).
+These scripts use the [Tweepy API](http://docs.tweepy.org/en/v3.5.0/api.html) and the [Twitter REST API](https://dev.twitter.com/rest/public).
 
 Before Getting Any Friends and Followers
 =
