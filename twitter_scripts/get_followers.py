@@ -51,7 +51,7 @@ def get_follower_ids_from_screenname(screenname):
 	remaining_secs = (len(users) - len(protected_users) - len(users_to_followers.keys())) * 70
 	comp_time = datetime.datetime.fromtimestamp(int(datetime.datetime.now().strftime('%s')) + remaining_secs)
 	update_str = update_str + '; estimated completion time: ' + comp_time.strftime('%a %H:%M')
-	print update_str
+	print (update_str)
 	return ids
 
 def should_get_user_info(screenname):
@@ -74,7 +74,7 @@ def run():
 		for user in users:
 			if user[-1] == '\"':
 				user = user[:-1]
-			print user
+			print (user)
 			if should_get_user_info(user):
 				try:
 					users_to_followers[user] = get_follower_ids_from_screenname(user)
@@ -121,7 +121,7 @@ while (len(users) > 0):
 			if user not in users_to_followers.keys():
 				users.append(user)
 			users.sort(key=lambda uname:user_data[uname]['followers_count'])
-		print len(users)
+		print (len(users))
 		run()
 	except KeyboardInterrupt:
 		dump()

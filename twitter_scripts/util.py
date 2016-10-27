@@ -12,7 +12,7 @@ def send_notification(message):
 
 	# t_client = TwilioRestClient(SID, token)
 	# message = t_client.messages.create(body=message, from_=from_num, to=to_num)
-	print message
+	print (message)
 
 def count_down(minutes=0, seconds=0):
 	for i in xrange(minutes*60 + seconds,0,-1):

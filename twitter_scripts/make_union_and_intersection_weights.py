@@ -30,7 +30,7 @@ def write_edges(connection_dict, output_filename, weight_function):
 		uid = sname_to_udata[sname]['id']
 		connection_ids = connection_dict[sname]
 		if weight_function(sname) > 0 and len(connection_ids) > 0:
-			print output_filename + '\t' + str(index1) + '/' + str(len(collected_snames))
+			print (output_filename + '\t' + str(index1) + '/' + str(len(collected_snames)))
 
 			for index2 in range(index1, len(collected_snames)):
 				sname2 = collected_snames[index2]
@@ -38,7 +38,7 @@ def write_edges(connection_dict, output_filename, weight_function):
 				connection_ids2 = connection_dict[sname2]
 
 				if weight_function(sname2) > 0 and len(connection_ids2) > 0:
-					# print sname + ', ' + sname2
+					# print (sname + ', ' + sname2)
 					x = intersection(connection_ids, connection_ids2)
 					X = len(x) * (float(len(connection_ids))/weight_function(sname)) * (float(len(connection_ids2))/weight_function(sname2))
 					U = float(weight_function(sname) + weight_function(sname2) - X)

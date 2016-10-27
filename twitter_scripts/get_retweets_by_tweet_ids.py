@@ -42,7 +42,7 @@ def load_tweet_ids_from_csv():
 	for row in csvreader:
 		if (row[0] != ""):
 			tweet_ids.append(row[0])
-	print str(len(tweet_ids)) + " tweets ids loaded"
+	print (str(len(tweet_ids)) + " tweets ids loaded")
 	return tweet_ids
 
 def write_to_csv(data):
@@ -65,7 +65,7 @@ while start_index < len(tweet_ids):
 		end_index = len(tweet_ids)
 	response = make_request(token, tweet_ids[start_index:end_index])
 	for tweet_id, tweet_data in response["id"].items():
-		print tweet_data
+		print (tweet_data)
 		rt_count = None
 		if tweet_data != None:
 			rt_count = tweet_data["retweet_count"]
@@ -75,4 +75,4 @@ while start_index < len(tweet_ids):
 
 write_to_csv(id_to_rt_count)
 
-print "Done!"
+print ("Done!")

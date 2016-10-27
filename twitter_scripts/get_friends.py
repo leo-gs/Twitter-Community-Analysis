@@ -39,7 +39,7 @@ def get_friend_ids_from_screenname(screenname):
 	remaining_secs = (len(users) - len(protected_users) - len(users_to_friends.keys())) * 70
 	comp_time = datetime.datetime.fromtimestamp(int(datetime.datetime.now().strftime('%s')) + remaining_secs)
 	update_str = update_str + '; estimated completion time: ' + comp_time.strftime('%a %H:%M')
-	print update_str
+	print (update_str)
 	return ids
 
 def should_get_user_info(screenname):
@@ -62,7 +62,7 @@ def run():
 		for user in users:
 			if user[-1] == '\"':
 				user = user[:-1]
-			print user
+			print (user)
 			if should_get_user_info(user):
 				try:
 					users_to_friends[user] = get_friend_ids_from_screenname(user)
@@ -70,7 +70,7 @@ def run():
 					json.dump(users_to_friends, open(OUTPUT_FILENAME, 'w'))
 					count_down(15)
 				except tweepy.error.TweepError as ex:
-					print ex
+					print (ex)
 					protected_users.append(user)
 					count_down(1)
 		dump()
@@ -110,7 +110,7 @@ while len(users) > 0:
 			if user not in users_to_friends.keys():
 				users.append(user)
 			users.sort(key=lambda sname:user_data[sname]['friends_count'])
-		print len(users)
+		print (len(users))
 		run()
 	except KeyboardInterrupt:
 		dump()

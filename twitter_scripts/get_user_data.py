@@ -57,7 +57,7 @@ def get_user_data_from_screenname(screenname):
 	remaining_secs = (len(screennames) - len(screenname_to_user_data.keys()) - len(suspended_users)) * 6
 	comp_time = datetime.datetime.fromtimestamp(int(datetime.datetime.now().strftime('%s')) + remaining_secs)
 	update_str = update_str + '; estimated completion time: ' + comp_time.strftime('%a %H:%M')
-	print update_str
+	print (update_str)
 	return user_data
 
 def run():
@@ -79,8 +79,8 @@ def run():
 		dump()
 		quit()
 
-print len(screennames)
-print len(suspended_users)
+print (len(screennames))
+print (len(suspended_users))
 while len(screenname_to_user_data) < (len(screennames) - len(suspended_users)):
 	try:
 		run()
