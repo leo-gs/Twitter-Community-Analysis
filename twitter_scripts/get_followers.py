@@ -15,8 +15,8 @@ access_token_secret = config[3]
 
 wait_time = 15
 
-INPUT_FILENAME = 'data/username_to_user_data.json'
-OUTPUT_FILENAME = 'data/username_to_follower_id.json'
+INPUT_FILENAME = 'data/screenname_to_user_data.json'
+OUTPUT_FILENAME = 'data/screenname_to_follower_id.json'
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
@@ -39,24 +39,24 @@ def get_already_collected():
 	for row in reader:
 		already_collected.add(row[1])
 
-def get_follower_ids_from_username(username):
+def get_follower_ids_from_screenname(screenname):
 	ids = []
-	for page in tweepy.Cursor(api.followers_ids, screen_name=username).pages():
+	for page in tweepy.Cursor(api.followers_ids, screen_name=screenname).pages():
 		ids.extend(page)
 		count_down(1)
 		if len(ids) > 20000:
-			capped_followers[username] = user_data[username]['followers_count']
+			capped_followers[screenname] = user_data[screenname]['followers_count']
 			break
-	update_str = str(len(users_to_followers.keys()) + len(protected_users)) + '/' + str(len(users)) + ' collected: ' + username + ' ' + str(len(ids))
+	update_str = str(len(users_to_followers.keys()) + len(protected_users)) + '/' + str(len(users)) + ' collected: ' + screenname + ' ' + str(len(ids))
 	remaining_secs = (len(users) - len(protected_users) - len(users_to_followers.keys())) * 70
 	comp_time = datetime.datetime.fromtimestamp(int(datetime.datetime.now().strftime('%s')) + remaining_secs)
 	update_str = update_str + '; estimated completion time: ' + comp_time.strftime('%a %H:%M')
 	print update_str
 	return ids
 
-def should_get_user_info(username):
-	no_info = (username not in users_to_followers.keys()) and (user_data[username]['id'] not in already_collected)
-	protected = username in protected_users
+def should_get_user_info(screenname):
+	no_info = (screenname not in users_to_followers.keys()) and (user_data[screenname]['id'] not in already_collected)
+	protected = screenname in protected_users
 	return no_info and not protected
 
 def print_update():
@@ -77,7 +77,7 @@ def run():
 			print user
 			if should_get_user_info(user):
 				try:
-					users_to_followers[user] = get_follower_ids_from_username(user)
+					users_to_followers[user] = get_follower_ids_from_screenname(user)
 				except tweepy.RateLimitError:
 					json.dump(users_to_followers, open(OUTPUT_FILENAME, 'w'))
 					count_down(15)

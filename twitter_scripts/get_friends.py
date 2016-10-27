@@ -13,8 +13,8 @@ consumer_secret = config[1]
 access_token = config[2]
 access_token_secret = config[3]
 
-INPUT_FILENAME = 'data/username_to_user_data.json'
-OUTPUT_FILENAME = 'data/username_to_friend_id.json'
+INPUT_FILENAME = 'data/screenname_to_user_data.json'
+OUTPUT_FILENAME = 'data/screenname_to_friend_id.json'
 
 auth = tweepy.OAuthHandler(consumer_key, consumer_secret)
 auth.set_access_token(access_token, access_token_secret)
@@ -27,24 +27,24 @@ user_data = json.load(open(INPUT_FILENAME))
 
 capped_friends = json.load(open('data/capped_friends.json'))
 
-def get_friend_ids_from_username(username):
+def get_friend_ids_from_screenname(screenname):
 	ids = []
-	for page in tweepy.Cursor(api.friends_ids, screen_name=username).pages():
+	for page in tweepy.Cursor(api.friends_ids, screen_name=screenname).pages():
 		ids.extend(page)
 		count_down(1)
 		if len(ids) > 20000:
-			capped_friends[username] = user_data[username]['friends_count']
+			capped_friends[screenname] = user_data[screenname]['friends_count']
 			break
-	update_str = str(len(users_to_friends.keys()) + len(protected_users)) + '/' + str(len(users)) + ' collected: ' + username + ' ' + str(len(ids))
+	update_str = str(len(users_to_friends.keys()) + len(protected_users)) + '/' + str(len(users)) + ' collected: ' + screenname + ' ' + str(len(ids))
 	remaining_secs = (len(users) - len(protected_users) - len(users_to_friends.keys())) * 70
 	comp_time = datetime.datetime.fromtimestamp(int(datetime.datetime.now().strftime('%s')) + remaining_secs)
 	update_str = update_str + '; estimated completion time: ' + comp_time.strftime('%a %H:%M')
 	print update_str
 	return ids
 
-def should_get_user_info(username):
-	no_info = username not in users_to_friends.keys()
-	protected = username in protected_users
+def should_get_user_info(screenname):
+	no_info = screenname not in users_to_friends.keys()
+	protected = screenname in protected_users
 	return no_info and not protected
 
 def print_update():
@@ -65,7 +65,7 @@ def run():
 			print user
 			if should_get_user_info(user):
 				try:
-					users_to_friends[user] = get_friend_ids_from_username(user)
+					users_to_friends[user] = get_friend_ids_from_screenname(user)
 				except tweepy.RateLimitError:
 					json.dump(users_to_friends, open(OUTPUT_FILENAME, 'w'))
 					count_down(15)
@@ -100,7 +100,7 @@ users = []
 for user in user_data:
 	if user not in users_to_friends.keys():
 		users.append(user)
-users.sort(key=lambda uname:user_data[uname]['friends_count'])
+users.sort(key=lambda sname:user_data[sname]['friends_count'])
 protected_users = json.load(open('data/protected_users.json'))
 
 while len(users) > 0:
@@ -109,7 +109,7 @@ while len(users) > 0:
 		for user in user_data:
 			if user not in users_to_friends.keys():
 				users.append(user)
-			users.sort(key=lambda uname:user_data[uname]['friends_count'])
+			users.sort(key=lambda sname:user_data[sname]['friends_count'])
 		print len(users)
 		run()
 	except KeyboardInterrupt:

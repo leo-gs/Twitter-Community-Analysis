@@ -6,8 +6,8 @@ from time import strftime
 import tweepy
 from util import send_notification
 
-INPUT_FILENAME = 'data/username_to_user_id.json'
-OUTPUT_FILENAME = 'data/username_to_user_data.json'
+INPUT_FILENAME = 'data/screenname_to_user_id.json'
+OUTPUT_FILENAME = 'data/screenname_to_user_data.json'
 
 config = open(sys.argv[1]).read().split()
 consumer_key = config[0]
@@ -20,16 +20,16 @@ auth.set_access_token(access_token, access_token_secret)
 
 api = tweepy.API(auth)
 
-usernames = json.load(open(INPUT_FILENAME)).keys()
-username_to_user_data = json.load(open(OUTPUT_FILENAME))
+screennames = json.load(open(INPUT_FILENAME)).keys()
+screenname_to_user_data = json.load(open(OUTPUT_FILENAME))
 suspended_users = set(json.load(open('data/suspended_users.json')))
 
 def dump():
-	json.dump(username_to_user_data, open(OUTPUT_FILENAME, 'w'))
+	json.dump(screenname_to_user_data, open(OUTPUT_FILENAME, 'w'))
 	json.dump(list(suspended_users), open('data/suspended_users.json', 'w'))
 
 def print_update():
-	sys.stdout.write('\n' + str(len(username_to_user_data.keys())) + '/' + str(len(usernames)-len(suspended_users)) + ' collected')
+	sys.stdout.write('\n' + str(len(screenname_to_user_data.keys())) + '/' + str(len(screennames)-len(suspended_users)) + ' collected')
 	sys.stdout.flush()
 
 def count_down(minutes=0, seconds=0):
@@ -50,11 +50,11 @@ def count_down(minutes=0, seconds=0):
 		dump()
 		quit()
 
-def get_user_data_from_username(username):
-	user_data = api.get_user(username)._json
+def get_user_data_from_screenname(screenname):
+	user_data = api.get_user(screenname)._json
 	count_down(seconds=6)
-	update_str = str(len(username_to_user_data.keys())+1) + '/' + str(len(usernames)-len(suspended_users)) + ' collected: ' + username + ' ' + str(user_data['id'])
-	remaining_secs = (len(usernames) - len(username_to_user_data.keys()) - len(suspended_users)) * 6
+	update_str = str(len(screenname_to_user_data.keys())+1) + '/' + str(len(screennames)-len(suspended_users)) + ' collected: ' + screenname + ' ' + str(user_data['id'])
+	remaining_secs = (len(screennames) - len(screenname_to_user_data.keys()) - len(suspended_users)) * 6
 	comp_time = datetime.datetime.fromtimestamp(int(datetime.datetime.now().strftime('%s')) + remaining_secs)
 	update_str = update_str + '; estimated completion time: ' + comp_time.strftime('%a %H:%M')
 	print update_str
@@ -62,16 +62,16 @@ def get_user_data_from_username(username):
 
 def run():
 	try:
-		for username in usernames:
-			if not username in username_to_user_data.keys() and username not in suspended_users:
+		for screenname in screennames:
+			if not screenname in screenname_to_user_data.keys() and screenname not in suspended_users:
 				try:
-					username_to_user_data[username] = get_user_data_from_username(username)
+					screenname_to_user_data[screenname] = get_user_data_from_screenname(screenname)
 				except tweepy.RateLimitError:
 					dump()
 					count_down(minutes=15)
 				except tweepy.error.TweepError as ex:
-					print username
-					suspended_users.add(username)
+					print screenname
+					suspended_users.add(screenname)
 		print_update()
 		dump()
 	except KeyboardInterrupt:
@@ -79,9 +79,9 @@ def run():
 		dump()
 		quit()
 
-print len(usernames)
+print len(screennames)
 print len(suspended_users)
-while len(username_to_user_data) < (len(usernames) - len(suspended_users)):
+while len(screenname_to_user_data) < (len(screennames) - len(suspended_users)):
 	try:
 		run()
 	except KeyboardInterrupt:
