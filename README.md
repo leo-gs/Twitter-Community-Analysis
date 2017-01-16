@@ -39,6 +39,6 @@ Streaming and Searching by Keyword
 - **User**: contains user data at the time of being captured
 - **TweetUser**: links each tweet to the user who tweeted it
 - **TweetEntity**: contains the entities (hashtags, user mentions, symbols, urls) of a tweet at the time of being captured
-The script used to create these tables if `create_tables.sql`.
+The script used to create these tables is `create_tables.sql`.
 
 For more reference, visit the [Twitter Search API](https://dev.twitter.com/rest/public/search) or the [Twitter Streaming API](https://dev.twitter.com/streaming/public).
