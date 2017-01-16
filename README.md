@@ -1,16 +1,18 @@
 These scripts use the [Tweepy API](http://docs.tweepy.org/en/v3.5.0/api.html) and the [Twitter REST API](https://dev.twitter.com/rest/public).
 
-Before Getting Any Friends and Followers
+Before Doing Anything
 =
 1.) Setup tweepy by navigating to **tweepy** and running the command `python setup.py`.
 
 2.) Get a Twitter API key [here](https://apps.twitter.com/app/new).  Fill in **twitter_scripts/config/twitter_config.txt** with the access keys/tokens/secrets.  Twitter rate limits each key separately, so you can generate multiple access keys and save them in multiple .txt files if you want do multiple things at once.
 
-3.) Put a .csv file with two columns, Twitter screen name and Twitter user id (in that order) in the **twitter_scripts_/data/** directory.  Name the spreadsheet **screennames.csv**.
+Before Getting Any Friends and Followers
+=
+1.) Put a .csv file with two columns, Twitter screen name and Twitter user id (in that order) in the **twitter_scripts_/data/** directory.  Name the spreadsheet **screennames.csv**.
 
-4.) In the terminal window, navigate to the **twitter_scripts** directory and run the command `python csv_to_json.py`.  This will reformat the .csv file as a .json file.
+2.) In the terminal window, navigate to the **twitter_scripts** directory and run the command `python csv_to_json.py`.  This will reformat the .csv file as a .json file.
 
-5.) Run the command `python get_user_data.py config/twitter_config.txt`.  This will pull data about each user on the spreadsheet from Twitter.
+3.) Run the command `python get_user_data.py config/twitter_config.txt`.  This will pull data about each user on the spreadsheet from Twitter.
 
 Follower and Following Relations
 =
@@ -28,4 +30,15 @@ Run the command `python make_union_and_intersection_weights.py`.  This will outp
 
 Getting Retweets
 =
-Given a .csv file with a list of tweet ids, this script gets the retweet count for each tweet.  If the tweet data cannot be found, the cell in the retweets column will be empty.  Duplicate tweet ids will be removed from the output spreadsheet.  To get rewteet counts, run the command `python get_retweets_by_tweet_ids.py data/input.csv config/tweetids.txt`, where **tweetids.csv** is the a .csv spreadsheet with tweet ids in the first column.  The output will be a .csv file **data/tweetids_retweets.csv**.  You don't need to set up tweepy or run any other scripts before running this script, but you do need a Twitter API key as described in step 2 above.
+Given a .csv file with a list of tweet ids, this script gets the retweet count for each tweet.  If the tweet data cannot be found, the cell in the retweets column will be empty.  Duplicate tweet ids will be removed from the output spreadsheet.  To get rewteet counts, run the command `python get_retweets_by_tweet_ids.py data/input.csv config/tweetids.txt`, where **tweetids.csv** is the a .csv spreadsheet with tweet ids in the first column.  The output will be a .csv file **data/tweetids_retweets.csv**.  You don't need to set up tweepy or run any other scripts before running this script, but you do need a Twitter API key as described in *Before Doing Anything*.
+
+Streaming and Searching by Keyword
+=
+`stream_by_keywords.py` and `search_by_keywords.py` each take 3 parameters: a file with Twitter API keys (as described above), the name of the output sqlite3 database, and a .txt file with a list of newline-separated keywords. Right now this script only searches for English-language tweets, but this can be modified. If the given database does not exist or does not have the correct tables, a new one will be created. If it does exist and has the correct tables, it will be added to. In the database, there are four tables holding your data:
+- **Tweet**: contains tweet data at the time of being captured
+- **User**: contains user data at the time of being captured
+- **TweetUser**: links each tweet to the user who tweeted it
+- **TweetEntity**: contains the entities (hashtags, user mentions, symbols, urls) of a tweet at the time of being captured
+The script used to create these tables if `create_tables.sql`.
+
+For more reference, visit the [Twitter Search API](https://dev.twitter.com/rest/public/search) or the [Twitter Streaming API](https://dev.twitter.com/streaming/public).
