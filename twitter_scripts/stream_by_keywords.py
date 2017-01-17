@@ -52,7 +52,6 @@ def insert_tweet(tweet,db):
 	db.insert_tweet(tweet_id,text,parent_text,created_at,fav_count,retweet_count,ttype,parent_id,source)
 
 def insert_tweetentities(tweet,db):
-	print tweet.entities.keys()
 	hashtags = tweet.entities['hashtags']
 	for hashtag in hashtags:
 		db.insert_tweetentity(tweet.id,'hashtag',hashtag['text'])
