@@ -8,7 +8,7 @@ DROP TABLE IF EXISTS EntityType;
 CREATE TABLE EntityType (
 	type TEXT PRIMARY KEY
 );
-INSERT INTO EntityType VALUES ('hashtag'), ('url'), ('user_mentions'), ('symbols');
+INSERT INTO EntityType VALUES ('hashtag'), ('url'), ('user_mentions'), ('symbols'), ('media'), ('extended');
 
 DROP TABLE IF EXISTS User;
 CREATE TABLE User (

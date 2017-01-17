@@ -52,21 +52,32 @@ def insert_tweet(tweet,db):
 	db.insert_tweet(tweet_id,text,parent_text,created_at,fav_count,retweet_count,ttype,parent_id,source)
 
 def insert_tweetentities(tweet,db):
+	print tweet.entities.keys()
 	hashtags = tweet.entities['hashtags']
 	for hashtag in hashtags:
-			db.insert_tweetentity(tweet.id,'hashtag',hashtag)
+		db.insert_tweetentity(tweet.id,'hashtag',hashtag['text'])
 
 	urls = tweet.entities['urls']
 	for url in urls:
-		db.insert_tweetentity(tweet.id,'url',url)
+		db.insert_tweetentity(tweet.id,'url',url['expanded_url'])
 
 	symbols = tweet.entities['symbols']
 	for symbol in symbols:
-		db.insert_tweetentity(tweet.id,'symbol',symbol)
+		db.insert_tweetentity(tweet.id,'symbol',symbol['text'])
 
 	umentions = tweet.entities['user_mentions']
 	for umention in umentions:
-		db.insert_tweetentity(tweet.id,'user_mention',umention)
+		db.insert_tweetentity(tweet.id,'user_mention',umention['screen_name'])
+
+	if 'media' in tweet.entities:
+		media = tweet.entities['media']
+		for medium in media:
+			db.insert_tweetentity(tweet.id,'media',medium['expanded_url'])
+
+	if 'extended_entities' in tweet.entities:
+		extendeds = tweet.entities['extended_entities']
+		for extended in extendeds:
+			db.insert_tweetentity(tweet.id,'extended',extended['expanded_url'])
 
 def insert_user(user,db):
 	user_id,description,followers_count,friends_count,name,screen_name,time_zone,url = user.id,user.description,user.followers_count,user.friends_count,user.name,user.screen_name,user.time_zone,user.url
@@ -86,6 +97,7 @@ class StreamListener(tweepy.StreamListener):
 				insert_user(user,self.db)
 
 			insert_tweet(tweet,self.db)
+			insert_tweetentities(tweet,self.db)
 			self.db.insert_tweetuser(tweet.id,user.id)
 		except sqlite3.InterfaceError:
 			pass

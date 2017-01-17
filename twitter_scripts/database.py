@@ -30,12 +30,9 @@ class Database:
 		return (utc_dt - datetime.datetime.utcfromtimestamp(0)).total_seconds()
 
 	def execute_and_commit(self,query,values):
-		try:
-			self.cursor.execute(query,values)
-			self.conn.commit()
-			return self.cursor.fetchall()
-		except sqlite3.IntegrityError:
-			pass
+		self.cursor.execute(query,values)
+		self.conn.commit()
+		return self.cursor.fetchall()
 
 	'''
 	Order based on dependencies:

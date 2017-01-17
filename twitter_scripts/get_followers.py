@@ -27,7 +27,6 @@ users_to_followers = json.load(open(OUTPUT_FILENAME))
 
 user_data = json.load(open(INPUT_FILENAME))
 # users = user_data.keys()
-# users = user_data.keys()
 
 already_collected = set()
 
