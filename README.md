@@ -28,9 +28,9 @@ Run the command `python make_union_and_intersection_weights.py`.  This will outp
 - **data/weights_friends.csv**: shared friends
 - **data/weights.csv**: shared friends and followers
 
-Getting Retweets
+Updating Retweet and Favorite Counts
 =
-Given a .csv file with a list of tweet ids, this script gets the retweet count for each tweet.  If the tweet data cannot be found, the cell in the retweets column will be empty.  Duplicate tweet ids will be removed from the output spreadsheet.  To get rewteet counts, run the command `python get_retweets_by_tweet_ids.py data/input.csv config/tweetids.txt`, where **tweetids.csv** is the a .csv spreadsheet with tweet ids in the first column.  The output will be a .csv file **data/tweetids_retweets.csv**.  You don't need to set up tweepy or run any other scripts before running this script, but you do need a Twitter API key as described in *Before Doing Anything*.
+Given a SQLite3 database populated with Tweets as created by the Streaming or Searching scripts described below, this script updates the retweet and favorite count for each tweet.  If the tweet data cannot be found, the values will not be changed.  To run the script, run the command `python get_retweets_by_tweet_ids.py config/tweetids.txt DATABASE.db`, where **DATABASE.db** is the SQLite3 database.
 
 Streaming and Searching by Keyword
 =
