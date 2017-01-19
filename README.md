@@ -30,7 +30,7 @@ Run the command `python make_union_and_intersection_weights.py`.  This will outp
 
 Updating Retweet and Favorite Counts
 =
-Given a SQLite3 database populated with Tweets as created by the Streaming or Searching scripts described below, this script updates the retweet and favorite count for each tweet.  If the tweet data cannot be found, the values will not be changed.  To run the script, run the command `python get_retweets_by_tweet_ids.py config/tweetids.txt DATABASE.db`, where **DATABASE.db** is the SQLite3 database.
+Given a SQLite3 database populated with Tweets as created by the Streaming or Searching scripts described below, this script updates the retweet and favorite count for each tweet.  If the tweet data cannot be found, the values will not be changed.  To run the script, run the command `python update_tweets.py config/tweetids.txt DATABASE.db`, where **DATABASE.db** is the SQLite3 database.
 
 Streaming and Searching by Keyword
 =
