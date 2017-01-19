@@ -45,11 +45,11 @@ def parse_tweet_type(tweet):
 		return ('original',None,None)
 
 def insert_tweet(tweet,db):
-	tweet_id,text,fav_count,retweet_count,source = tweet.id,tweet.text,tweet.favorite_count,tweet.retweet_count,tweet.source
+	tweet_id,text,favorite_count,retweet_count,source = tweet.id,tweet.text,tweet.favorite_count,tweet.retweet_count,tweet.source
 	created_at = tweet.created_at
 	ttype,parent_id,parent_text = parse_tweet_type(tweet)
 
-	db.insert_tweet(tweet_id,text,parent_text,created_at,fav_count,retweet_count,ttype,parent_id,source)
+	db.insert_tweet(tweet_id,text,parent_text,created_at,favorite_count,retweet_count,ttype,parent_id,source)
 
 def insert_tweetentities(tweet,db):
 	hashtags = tweet.entities['hashtags']

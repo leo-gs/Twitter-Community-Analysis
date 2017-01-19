@@ -59,16 +59,17 @@ class Database:
 		return self.execute_and_commit(query,values)
 
 	'''
-	tweet_id,fav_count,retweet_count,parent_id: int
+	tweet_id,favorite_count,retweet_count,parent_id: int
 	text,ttype,source: str
 	created_at: datetime (UTC timezone)
 	'''
-	def insert_tweet(self,tweet_id,text,parent_text,created_at,fav_count,retweet_count,ttype,parent_id,source):
+	def insert_tweet(self,tweet_id,text,parent_text,created_at,favorite_count,retweet_count,ttype,parent_id,source):
 		added_at_delta = self.convert_to_timedelta(datetime.datetime.utcnow())
 		created_at_delta = self.convert_to_timedelta(created_at)
+		print 'neat'
 
-		query = 'INSERT INTO Tweet VALUES (?,?,?,?,?,?,?,?,?,?);'
-		values = (tweet_id,text,parent_text,added_at_delta,created_at_delta,fav_count,retweet_count,ttype,parent_id,source)
+		query = 'INSERT INTO Tweet VALUES (?,?,?,?,?,?,?,?,?,?,?);'
+		values = (tweet_id,text,parent_text,added_at_delta,None,created_at_delta,favorite_count,retweet_count,ttype,parent_id,source)
 
 		self.execute_and_commit(query,values)
 
@@ -100,3 +101,15 @@ class Database:
 
 		result = self.execute_and_commit(query,values)[0]
 		return result[0] > 0
+
+	def update_tweet(self,tweet_id,retweet_count,favorite_count):
+		updated_at_delta = self.convert_to_timedelta(datetime.datetime.utcnow())
+
+		query = 'UPDATE Tweet SET updated_at=?,retweet_count=?,favorite_count=? WHERE tweet_id=?'
+		values = (updated_at_delta,retweet_count,favorite_count,tweet_id)
+
+		self.execute_and_commit(query,values)
+
+	def select_data(self,query):
+		return self.execute_and_commit(query,())
+

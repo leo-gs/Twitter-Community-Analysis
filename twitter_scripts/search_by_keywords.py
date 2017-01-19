@@ -63,7 +63,7 @@ def parse_tweet_type(tweet):
 		return ('original',None,None)
 
 def insert_tweet(tweet,db):
-	tweet_id,text,fav_count,retweet_count = tweet['id'],tweet['text'],tweet['favorite_count'],tweet['retweet_count']
+	tweet_id,text,favorite_count,retweet_count = tweet['id'],tweet['text'],tweet['favorite_count'],tweet['retweet_count']
 	created_at = datetime.datetime.strptime(tweet['created_at'], '%a %b %d %H:%M:%S +0000 %Y')
 	ttype,parent_id,parent_text = parse_tweet_type(tweet)
 
@@ -72,7 +72,7 @@ def insert_tweet(tweet,db):
 	if hashtags:
 		hashtags_str = ', '.join([hashtag['text'] for hashtag in hashtags])
 
-	db.insert_tweet(tweet_id,text,parent_text,hashtags_str,created_at,fav_count,retweet_count,ttype,parent_id)
+	db.insert_tweet(tweet_id,text,parent_text,hashtags_str,created_at,favorite_count,retweet_count,ttype,parent_id)
 
 def insert_user(user,db):
 	user_id,description,followers_count,friends_count,name,screen_name,time_zone,url = user['id'],user['description'],user['followers_count'],user['friends_count'],user['name'],user['screen_name'],user['time_zone'],user['url']
