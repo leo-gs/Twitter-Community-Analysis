@@ -72,8 +72,8 @@ CREATE TABLE FollowerPasses (
 	finished_at INTEGER
 );
 
-DROP TABLE IF EXISTS UserFollowProgress;
-CREATE TABLE UserFollowProgress (
+DROP TABLE IF EXISTS UserFollowerProgress;
+CREATE TABLE UserFollowerProgress (
 	user_id INTEGER,
 	status TEXT,
 	pass INTEGER,
@@ -84,5 +84,34 @@ CREATE TABLE UserFollowProgress (
 	followers_added INTEGER,
 	FOREIGN KEY(user_id) REFERENCES User(user_id),
 	FOREIGN KEY(pass) REFERENCES FollowerPasses(pass),
+	PRIMARY KEY(user_id,pass)
+);
+
+DROP TABLE IF EXISTS UserFriend;
+CREATE TABLE UserFriend (
+	user_id INTEGER,
+	friend_id INTEGER,
+	FOREIGN KEY(user_id) REFERENCES User(user_id)
+);
+
+DROP TABLE IF EXISTS FriendPasses;
+CREATE TABLE FriendPasses (
+	pass INTEGER PRIMARY KEY AUTOINCREMENT,
+	started_at INTEGER,
+	finished_at INTEGER
+);
+
+DROP TABLE IF EXISTS UserFriendProgress;
+CREATE TABLE UserFriendProgress (
+	user_id INTEGER,
+	status TEXT,
+	pass INTEGER,
+	unavailable INTEGER,
+	started_at INTEGER,
+	finished_at INTEGER,
+	capped_at INTEGER,
+	friends_added INTEGER,
+	FOREIGN KEY(user_id) REFERENCES User(user_id),
+	FOREIGN KEY(pass) REFERENCES FriendPasses(pass),
 	PRIMARY KEY(user_id,pass)
 );

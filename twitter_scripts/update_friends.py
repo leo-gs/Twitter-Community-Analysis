@@ -20,39 +20,39 @@ def authenticate():
 	api = tweepy.API(auth)
 	return api
 
-def get_follower_ids_from_id(uid,api):
+def get_friend_ids_from_id(uid,api):
 	ids = []
 	try:
-		for page in tweepy.Cursor(api.followers_ids, id=uid).pages():
+		for page in tweepy.Cursor(api.friends_ids, id=uid).pages():
 			ids.extend(page)
 			time.sleep(1*60)
 			if CAP and len(ids) > CAP:
 				return ids[:CAP]
 	except tweepy.RateLimitError:
 		time.sleep(15*60)
-		ids = get_follower_ids_from_id(uid)
+		ids = get_friend_ids_from_id(uid)
 	return ids
 
 def run():
 	api = authenticate()
 	db = database.Database(sys.argv[2])
-	should_resume = db.pass_in_progress()
-	users = db.begin_updatefollowers_pass(should_resume)
+	should_resume = db.friend_pass_in_progress()
+	users = db.begin_updatefriends_pass(should_resume)
 
 	for user in users:
 		uid = user[0]
 		started_at_delta = db.get_utc_now_delta()
 		try:
-			follower_ids = get_follower_ids_from_id(uid,api)
-			db.update_userfollower_relations(uid,follower_ids,started_at_delta,False,capped_at=CAP)
+			friend_ids = get_friend_ids_from_id(uid,api)
+			db.update_userfriend_relations(uid,friend_ids,started_at_delta,False,capped_at=CAP)
 		except tweepy.error.TweepError as ex:
 			print ex
-			db.update_userfollower_relations(uid,[],started_at_delta,True,capped_at=CAP)
+			db.update_userfriend_relations(uid,[],started_at_delta,True,capped_at=CAP)
 			time.sleep(1*60)
 		except KeyboardInterrupt:
-			db.finish_updatefollowers_pass(ABORT_WHEN_INTERRUPTED)
+			db.finish_updatefriends_pass(ABORT_WHEN_INTERRUPTED)
 			quit()
 
-	db.finish_updatefollowers_pass(ABORT_WHEN_INTERRUPTED)
+	db.finish_updatefriends_pass(ABORT_WHEN_INTERRUPTED)
 
 run()

@@ -52,6 +52,14 @@ class Database:
 
 	def rollback(self):
 		self.cursor.execute('ROLLBACK;')
+	
+	'''
+	***
+
+	ADDING TWEETS AND USERS
+
+	***
+	'''
 
 	'''
 	Order based on dependencies:
@@ -145,6 +153,15 @@ class Database:
 	def select_data(self,query):
 		return self.execute_and_commit(query)
 
+
+	'''
+	***
+
+	UPDATING FOLLOWERS
+
+	***
+	'''
+
 	'''
 	resume_pass: Boolean, whether to resume the current pass or start a new one
 	returns number of current pass
@@ -154,9 +171,9 @@ class Database:
 
 		NEW_PASS = 'INSERT INTO FollowerPasses VALUES (?,?,?);'
 		GET_CURRENT_PASS = 'SELECT MAX(pass) FROM FollowerPasses;'
-		INSERT_USER_TO_START = 'INSERT INTO UserFollowProgress VALUES (?,?,?,?,?,?,?,?);'
+		INSERT_USER_TO_START = 'INSERT INTO UserFollowerProgress VALUES (?,?,?,?,?,?,?,?);'
 		SELECT_ALL_USERS = 'SELECT user_id FROM User;'
-		SELECT_PENDING_USERS = 'SELECT user_id FROM UserFollowProgress WHERE status=?'
+		SELECT_PENDING_USERS = 'SELECT user_id FROM UserFollowerProgress WHERE status=?'
 
 		if resume_pass and self.pass_in_progress():
 			self.current_pass = self.execute_and_commit(GET_CURRENT_PASS)[0][0]
@@ -181,8 +198,107 @@ class Database:
 		finished_at_delta = self.get_utc_now_delta()
 
 		UPDATE_PASS = 'UPDATE FollowerPasses SET finished_at=? WHERE pass<=?;'
-		UPDATE_USERPROGRESS = 'UPDATE UserFollowProgress SET status=? WHERE status=?'
-		USERS_PENDING = 'SELECT COUNT(1) FROM UserFollowProgress WHERE status=?'
+		UPDATE_USERPROGRESS = 'UPDATE UserFollowerProgress SET status=? WHERE status=?'
+		USERS_PENDING = 'SELECT COUNT(1) FROM UserFollowerProgress WHERE status=?'
+
+		userspending_values = (self.PENDING,)
+		users_pending = self.execute_and_commit(USERS_PENDING,userspending_values)[0][0] > 0
+
+		try:
+			self.begin_transaction()
+
+			if abort_pending:
+				userprogress_values = (self.ABORTED,self.PENDING)
+				self.execute(UPDATE_USERPROGRESS,userprogress_values)
+
+			if abort_pending or not users_pending:
+				pass_values = (finished_at_delta,self.current_pass)
+				self.execute(UPDATE_PASS,pass_values)
+			
+			self.commit()
+
+			self.current_pass = None
+		except Exception as ex:
+			self.rollback()
+			raise ex
+
+
+	def update_userfollower_relations(self,user_id,follower_ids,started_at_delta,unavailable,capped_at=None):
+		REMOVE_OLD_FOLLOWER_RELATIONS = 'DELETE FROM UserFollower WHERE user_id=?;'
+		INSERT_USERFOLLOWER = 'INSERT INTO UserFollower VALUES (?,?);'
+		FINISH_PASS_ON_USER = 'UPDATE UserFollowerProgress SET status=?,unavailable=?,started_at=?,finished_at=?,capped_at=?,followers_added=? WHERE user_id=? AND pass=?;'
+
+		finished_at_delta = self.get_utc_now_delta()
+
+		try:
+			self.begin_transaction()
+
+			if unavailable:
+				values = (self.COMPLETE,1,started_at_delta,finished_at_delta,capped_at,0,user_id,self.current_pass)
+				self.execute(FINISH_PASS_ON_USER,values)
+				self.commit()
+			else:
+				self.execute(REMOVE_OLD_FOLLOWER_RELATIONS,(user_id,))
+				for follower_id in follower_ids:
+					values = (user_id,follower_id)
+					self.execute(INSERT_USERFOLLOWER,values)
+				values = (self.COMPLETE,0,started_at_delta,finished_at_delta,capped_at,len(follower_ids),user_id,self.current_pass)
+				self.execute(FINISH_PASS_ON_USER,values)
+				self.commit()
+		except Exception as ex:
+			self.rollback()
+			raise ex
+
+
+	def follower_pass_in_progress(self):
+		query = 'SELECT COUNT(1) FROM FollowerPasses WHERE finished_at=?'
+		values = (-1,)
+
+		result = self.execute_and_commit(query,values)
+		return result[0][0] > 0
+
+	'''
+	***
+
+	UPDATING FRIENDS
+
+	***
+	'''
+	
+	def begin_updatefriends_pass(self,resume_pass):
+		started_at_delta = self.get_utc_now_delta()
+
+		NEW_PASS = 'INSERT INTO FriendPasses VALUES (?,?,?);'
+		GET_CURRENT_PASS = 'SELECT MAX(pass) FROM FriendPasses;'
+		INSERT_USER_TO_START = 'INSERT INTO UserFriendProgress VALUES (?,?,?,?,?,?,?,?);'
+		SELECT_ALL_USERS = 'SELECT user_id FROM User;'
+		SELECT_PENDING_USERS = 'SELECT user_id FROM UserFriendProgress WHERE status=?'
+
+		if resume_pass and self.pass_in_progress():
+			self.current_pass = self.execute_and_commit(GET_CURRENT_PASS)[0][0]
+			pending_users = self.execute_and_commit(SELECT_PENDING_USERS,(self.PENDING,))
+			return pending_users
+		else:
+			uids_to_update = self.execute_and_commit(SELECT_ALL_USERS)
+
+			values = (None,started_at_delta,-1)
+			self.execute_and_commit(NEW_PASS,values)
+			self.current_pass = self.execute_and_commit(GET_CURRENT_PASS)[0][0]
+			self.begin_transaction()
+
+			for uid in uids_to_update:
+				insert_userid_values = (int(uid[0]),self.PENDING,self.current_pass,None,None,None,None,None)
+				self.execute(INSERT_USER_TO_START,insert_userid_values)
+			self.commit()
+			return uids_to_update
+
+
+	def finish_updatefriends_pass(self,abort_pending):
+		finished_at_delta = self.get_utc_now_delta()
+
+		UPDATE_PASS = 'UPDATE FriendPasses SET finished_at=? WHERE pass<=?;'
+		UPDATE_USERPROGRESS = 'UPDATE UserFriendProgress SET status=? WHERE status=?'
+		USERS_PENDING = 'SELECT COUNT(1) FROM UserFriendProgress WHERE status=?'
 
 		userspending_values = (self.PENDING,)
 		users_pending = self.execute_and_commit(USERS_PENDING,userspending_values)[0][0] > 0
@@ -207,10 +323,10 @@ class Database:
 
 
 
-	def update_userfollower_relations(self,user_id,follower_ids,started_at_delta,unavailable,capped_at=None):
-		REMOVE_OLD_FOLLOWER_RELATIONS = 'DELETE FROM UserFollower WHERE user_id=?;'
-		INSERT_USERFOLLOWER = 'INSERT INTO UserFollower VALUES (?,?);'
-		FINISH_PASS_ON_USER = 'UPDATE UserFollowProgress SET status=?,unavailable=?,started_at=?,finished_at=?,capped_at=?,followers_added=? WHERE user_id=? AND pass=?;'
+	def update_userfriend_relations(self,user_id,friend_ids,started_at_delta,unavailable,capped_at=None):
+		REMOVE_OLD_FRIEND_RELATIONS = 'DELETE FROM UserFriend WHERE user_id=?;'
+		INSERT_USERFRIEND = 'INSERT INTO UserFriend VALUES (?,?);'
+		FINISH_PASS_ON_USER = 'UPDATE UserFriendProgress SET status=?,unavailable=?,started_at=?,finished_at=?,capped_at=?,friends_added=? WHERE user_id=? AND pass=?;'
 
 		finished_at_delta = self.get_utc_now_delta()
 
@@ -222,11 +338,11 @@ class Database:
 				self.execute(FINISH_PASS_ON_USER,values)
 				self.commit()
 			else:
-				self.execute(REMOVE_OLD_FOLLOWER_RELATIONS,(user_id,))
-				for follower_id in follower_ids:
-					values = (user_id,follower_id)
-					self.execute(INSERT_USERFOLLOWER,values)
-				values = (self.COMPLETE,0,started_at_delta,finished_at_delta,capped_at,len(follower_ids),user_id,self.current_pass)
+				self.execute(REMOVE_OLD_FRIEND_RELATIONS,(user_id,))
+				for friend_id in friend_ids:
+					values = (user_id,friend_id)
+					self.execute(INSERT_USERFRIEND,values)
+				values = (self.COMPLETE,0,started_at_delta,finished_at_delta,capped_at,len(friend_ids),user_id,self.current_pass)
 				self.execute(FINISH_PASS_ON_USER,values)
 				self.commit()
 		except Exception as ex:
@@ -234,9 +350,10 @@ class Database:
 			raise ex
 
 
-	def pass_in_progress(self):
-		query = 'SELECT COUNT(1) FROM FollowerPasses WHERE finished_at=?'
+	def friend_pass_in_progress(self):
+		query = 'SELECT COUNT(1) FROM FriendPasses WHERE finished_at=?'
 		values = (-1,)
 
 		result = self.execute_and_commit(query,values)
 		return result[0][0] > 0
+

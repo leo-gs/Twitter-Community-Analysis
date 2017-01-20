@@ -36,7 +36,7 @@ def get_follower_ids_from_id(uid,api):
 def run():
 	api = authenticate()
 	db = database.Database(sys.argv[2])
-	should_resume = db.pass_in_progress()
+	should_resume = db.follower_pass_in_progress()
 	users = db.begin_updatefollowers_pass(should_resume)
 
 	for user in users:
