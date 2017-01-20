@@ -57,3 +57,32 @@ CREATE TABLE TweetEntity (
 	entity_value TEXT,
 	FOREIGN KEY(entity_type) REFERENCES EntityType(type)
 );
+
+DROP TABLE IF EXISTS UserFollower;
+CREATE TABLE UserFollower (
+	user_id INTEGER,
+	follower_id INTEGER,
+	FOREIGN KEY(user_id) REFERENCES User(user_id)
+);
+
+DROP TABLE IF EXISTS FollowerPasses;
+CREATE TABLE FollowerPasses (
+	pass INTEGER PRIMARY KEY AUTOINCREMENT,
+	started_at INTEGER,
+	finished_at INTEGER
+);
+
+DROP TABLE IF EXISTS UserFollowProgress;
+CREATE TABLE UserFollowProgress (
+	user_id INTEGER,
+	status TEXT,
+	pass INTEGER,
+	unavailable INTEGER,
+	started_at INTEGER,
+	finished_at INTEGER,
+	capped_at INTEGER,
+	followers_added INTEGER,
+	FOREIGN KEY(user_id) REFERENCES User(user_id),
+	FOREIGN KEY(pass) REFERENCES FollowerPasses(pass),
+	PRIMARY KEY(user_id,pass)
+);

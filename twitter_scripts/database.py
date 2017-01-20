@@ -4,6 +4,10 @@ import sys
 
 class Database:
 
+	PENDING = 'pending'
+	COMPLETE = 'complete'
+	ABORTED = 'aborted'
+
 	def __init__(self,name):
 		self.conn = sqlite3.connect(name)
 		self.cursor = self.conn.cursor()
@@ -29,10 +33,25 @@ class Database:
 	def convert_to_timedelta(self,utc_dt):
 		return (utc_dt - datetime.datetime.utcfromtimestamp(0)).total_seconds()
 
-	def execute_and_commit(self,query,values):
+	def get_utc_now_delta(self):
+		return self.convert_to_timedelta(datetime.datetime.utcnow())
+
+	def execute_and_commit(self,query,values=()):
 		self.cursor.execute(query,values)
 		self.conn.commit()
 		return self.cursor.fetchall()
+
+	def begin_transaction(self):
+		self.cursor.execute('BEGIN;')
+
+	def execute(self,query,values=()):
+		self.cursor.execute(query,values)
+
+	def commit(self):
+		self.conn.commit()
+
+	def rollback(self):
+		self.cursor.execute('ROLLBACK;')
 
 	'''
 	Order based on dependencies:
@@ -50,7 +69,7 @@ class Database:
 	verified,protected: boolean
 	'''
 	def insert_user(self,user_id,created_at,description,followers_count,friends_count,name,screen_name,time_zone,url,verified,protected):
-		added_at_delta = self.convert_to_timedelta(datetime.datetime.utcnow())
+		added_at_delta = self.get_utc_now_delta()
 		created_at_delta = self.convert_to_timedelta(created_at)
 		
 		query = 'INSERT INTO User VALUES (?,?,?,?,?,?,?,?,?,?,?,?);'
@@ -64,9 +83,9 @@ class Database:
 	created_at: datetime (UTC timezone)
 	'''
 	def insert_tweet(self,tweet_id,text,parent_text,created_at,favorite_count,retweet_count,ttype,parent_id,source):
-		added_at_delta = self.convert_to_timedelta(datetime.datetime.utcnow())
+		print tweet_id
+		added_at_delta = self.get_utc_now_delta()
 		created_at_delta = self.convert_to_timedelta(created_at)
-		print 'neat'
 
 		query = 'INSERT INTO Tweet VALUES (?,?,?,?,?,?,?,?,?,?,?);'
 		values = (tweet_id,text,parent_text,added_at_delta,None,created_at_delta,favorite_count,retweet_count,ttype,parent_id,source)
@@ -82,12 +101,19 @@ class Database:
 
 		self.execute_and_commit(query,values)
 
+	'''
+	tweet_id: int
+	entity_type,entity_value: str
+	'''	
 	def insert_tweetentity(self,tweet_id,entity_type,entity_value):
 		query = 'INSERT INTO TweetEntity VALUES (?,?,?)'
 		values = (tweet_id,entity_type,entity_value)
 
 		self.execute_and_commit(query,values)
 
+	'''
+	user_id: int
+	'''
 	def user_exists(self,user_id):
 		query = 'SELECT COUNT(1) FROM User WHERE user_id=?;'
 		values = (user_id,)
@@ -95,6 +121,9 @@ class Database:
 		result = self.execute_and_commit(query,values)[0]
 		return result[0] > 0
 
+	'''
+	tweet_id: int
+	'''
 	def tweet_exists(self,tweet_id):
 		query = 'SELECT COUNT(1) FROM Tweet WHERE tweet_id=?;'
 		values = (tweet_id,)
@@ -102,8 +131,11 @@ class Database:
 		result = self.execute_and_commit(query,values)[0]
 		return result[0] > 0
 
+	'''
+	tweet_id,retweet_count,favorite_count: int
+	'''
 	def update_tweet(self,tweet_id,retweet_count,favorite_count):
-		updated_at_delta = self.convert_to_timedelta(datetime.datetime.utcnow())
+		updated_at_delta = self.get_utc_now_delta()
 
 		query = 'UPDATE Tweet SET updated_at=?,retweet_count=?,favorite_count=? WHERE tweet_id=?'
 		values = (updated_at_delta,retweet_count,favorite_count,tweet_id)
@@ -111,5 +143,100 @@ class Database:
 		self.execute_and_commit(query,values)
 
 	def select_data(self,query):
-		return self.execute_and_commit(query,())
+		return self.execute_and_commit(query)
 
+	'''
+	resume_pass: Boolean, whether to resume the current pass or start a new one
+	returns number of current pass
+	'''
+	def begin_updatefollowers_pass(self,resume_pass):
+		started_at_delta = self.get_utc_now_delta()
+
+		NEW_PASS = 'INSERT INTO FollowerPasses VALUES (?,?,?);'
+		GET_CURRENT_PASS = 'SELECT MAX(pass) FROM FollowerPasses;'
+		INSERT_USER_TO_START = 'INSERT INTO UserFollowProgress VALUES (?,?,?,?,?,?,?,?);'
+		SELECT_ALL_USERS = 'SELECT user_id FROM User;'
+		SELECT_PENDING_USERS = 'SELECT user_id FROM UserFollowProgress WHERE status=?'
+
+		if resume_pass and self.pass_in_progress():
+			self.current_pass = self.execute_and_commit(GET_CURRENT_PASS)[0][0]
+			pending_users = self.execute_and_commit(SELECT_PENDING_USERS,(self.PENDING,))
+			return pending_users
+		else:
+			uids_to_update = self.execute_and_commit(SELECT_ALL_USERS)
+
+			values = (None,started_at_delta,-1)
+			self.execute_and_commit(NEW_PASS,values)
+			self.current_pass = self.execute_and_commit(GET_CURRENT_PASS)[0][0]
+			self.begin_transaction()
+
+			for uid in uids_to_update:
+				insert_userid_values = (int(uid[0]),self.PENDING,self.current_pass,None,None,None,None,None)
+				self.execute(INSERT_USER_TO_START,insert_userid_values)
+			self.commit()
+			return uids_to_update
+
+
+	def finish_updatefollowers_pass(self,abort_pending):
+		finished_at_delta = self.get_utc_now_delta()
+
+		UPDATE_PASS = 'UPDATE FollowerPasses SET finished_at=? WHERE pass<=?;'
+		UPDATE_USERPROGRESS = 'UPDATE UserFollowProgress SET status=? WHERE status=?'
+		USERS_PENDING = 'SELECT COUNT(1) FROM UserFollowProgress WHERE status=?'
+
+		userspending_values = (self.PENDING,)
+		users_pending = self.execute_and_commit(USERS_PENDING,userspending_values)[0][0] > 0
+
+		try:
+			self.begin_transaction()
+
+			if abort_pending:
+				userprogress_values = (self.ABORTED,self.PENDING)
+				self.execute(UPDATE_USERPROGRESS,userprogress_values)
+
+			if abort_pending or not users_pending:
+				pass_values = (finished_at_delta,self.current_pass)
+				self.execute(UPDATE_PASS,pass_values)
+			
+			self.commit()
+
+			self.current_pass = None
+		except Exception as ex:
+			self.rollback()
+			raise ex
+
+
+
+	def update_userfollower_relations(self,user_id,follower_ids,started_at_delta,unavailable,capped_at=None):
+		REMOVE_OLD_FOLLOWER_RELATIONS = 'DELETE FROM UserFollower WHERE user_id=?;'
+		INSERT_USERFOLLOWER = 'INSERT INTO UserFollower VALUES (?,?);'
+		FINISH_PASS_ON_USER = 'UPDATE UserFollowProgress SET status=?,unavailable=?,started_at=?,finished_at=?,capped_at=?,followers_added=? WHERE user_id=? AND pass=?;'
+
+		finished_at_delta = self.get_utc_now_delta()
+
+		try:
+			self.begin_transaction()
+
+			if unavailable:
+				values = (self.COMPLETE,1,started_at_delta,finished_at_delta,capped_at,0,user_id,self.current_pass)
+				self.execute(FINISH_PASS_ON_USER,values)
+				self.commit()
+			else:
+				self.execute(REMOVE_OLD_FOLLOWER_RELATIONS,(user_id,))
+				for follower_id in follower_ids:
+					values = (user_id,follower_id)
+					self.execute(INSERT_USERFOLLOWER,values)
+				values = (self.COMPLETE,0,started_at_delta,finished_at_delta,capped_at,len(follower_ids),user_id,self.current_pass)
+				self.execute(FINISH_PASS_ON_USER,values)
+				self.commit()
+		except Exception as ex:
+			self.rollback()
+			raise ex
+
+
+	def pass_in_progress(self):
+		query = 'SELECT COUNT(1) FROM FollowerPasses WHERE finished_at=?'
+		values = (-1,)
+
+		result = self.execute_and_commit(query,values)
+		return result[0][0] > 0
