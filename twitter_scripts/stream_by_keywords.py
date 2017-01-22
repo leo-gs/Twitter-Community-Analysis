@@ -2,13 +2,15 @@ import base64
 import database
 import datetime
 import json
+import Queue
+import threading
 import requests
 import sqlite3
 import sys
 import tweepy
 
 '''
-Usage: python collect_by_term.py config.txt output_database.db keywords.txt
+Usage: python stream_by_keywords.py config.txt output_database.db keywords.txt
 '''
 
 INPUT_TERMS = open(sys.argv[3]).read().split()
@@ -45,6 +47,8 @@ def parse_tweet_type(tweet):
 		return ('original',None,None)
 
 def insert_tweet(tweet,db):
+	print tweet.text
+	print '\n'
 	tweet_id,text,favorite_count,retweet_count,source = tweet.id,tweet.text,tweet.favorite_count,tweet.retweet_count,tweet.source
 	created_at = tweet.created_at
 	ttype,parent_id,parent_text = parse_tweet_type(tweet)
@@ -84,32 +88,62 @@ def insert_user(user,db):
 	created_at = user.created_at
 	db.insert_user(user_id,created_at,description,followers_count,friends_count,screen_name,name,time_zone,url,verified,protected)
 
+class TweetProcessor():
+
+	def process(self):
+		self.db = database.Database(sys.argv[2])
+		self.keep_running = True
+
+		while self.keep_running:
+			try:
+				if not self.tweet_queue.empty():
+					tweet = self.tweet_queue.get()
+					user = tweet.user
+
+					if not self.db.user_exists(user.id):
+						insert_user(user,self.db)
+
+					insert_tweet(tweet,self.db)
+					insert_tweetentities(tweet,self.db)
+					self.db.insert_tweetuser(tweet.id,user.id)
+
+					self.tweet_queue.task_done()
+			except sqlite3.InterfaceError:
+				pass
+
+		self.db.close()
 
 ''''''
 
 class StreamListener(tweepy.StreamListener):
 
 	def on_status(self,tweet):
-		try:
-			user = tweet.user
-			if not self.db.user_exists(user.id):
-				insert_user(user,self.db)
+		self.tweet_queue.put(tweet)
 
-			insert_tweet(tweet,self.db)
-			insert_tweetentities(tweet,self.db)
-			self.db.insert_tweetuser(tweet.id,user.id)
-		except sqlite3.InterfaceError:
-			pass
+''''''
 
 def run():
-	listener = StreamListener()
-	listener.db = database.Database(sys.argv[2])
 	api = authenticate()
+
+	tweet_queue = Queue.Queue() # where tweets are queued to be processed
+
+	listener = StreamListener()
+	listener.tweet_queue = tweet_queue
+
+	processor = TweetProcessor()
+	processor.tweet_queue = tweet_queue
+
+	stream = tweepy.Stream(auth=api.auth, listener=listener)
+
 	try:
-		stream = tweepy.Stream(auth=api.auth, listener=listener)
+		thread = threading.Thread(target=processor.process)
+		thread.setDaemon(True)
+		thread.start()
 		stream.filter(track=INPUT_TERMS,languages=['en'])
 	except KeyboardInterrupt:
-		listener.db.close()
+		stream.disconnect()
+		processor.keep_running = False
+		thread.join()
 		quit()
 
 run()
