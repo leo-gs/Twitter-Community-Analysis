@@ -84,6 +84,7 @@ def insert_tweetentities(tweet,db):
 
 def insert_user(user,db):
 	user_id,description,followers_count,friends_count,name,screen_name,time_zone,url = user.id,user.description,user.followers_count,user.friends_count,user.name,user.screen_name,user.time_zone,user.url
+	print name
 	verified,protected = (1 if user.verified else 0),(1 if user.protected else 0)
 	created_at = user.created_at
 	db.insert_user(user_id,created_at,description,followers_count,friends_count,screen_name,name,time_zone,url,verified,protected)
@@ -99,9 +100,7 @@ class TweetProcessor():
 				if not self.tweet_queue.empty():
 					tweet = self.tweet_queue.get()
 					user = tweet.user
-
-					if not self.db.user_exists(user.id):
-						insert_user(user,self.db)
+					insert_user(user,self.db)
 
 					insert_tweet(tweet,self.db)
 					insert_tweetentities(tweet,self.db)

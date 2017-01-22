@@ -80,7 +80,7 @@ class Database:
 		added_at_delta = self.get_utc_now_delta()
 		created_at_delta = self.convert_to_timedelta(created_at)
 		
-		query = 'INSERT INTO User VALUES (?,?,?,?,?,?,?,?,?,?,?,?);'
+		query = 'INSERT OR REPLACE INTO User VALUES (?,?,?,?,?,?,?,?,?,?,?,?);'
 		values = (user_id,added_at_delta,created_at_delta,description,followers_count,friends_count,name,screen_name,time_zone,url,1 if verified else 0,1 if protected else 0)
 
 		return self.execute_and_commit(query,values)
@@ -91,11 +91,10 @@ class Database:
 	created_at: datetime (UTC timezone)
 	'''
 	def insert_tweet(self,tweet_id,text,parent_text,created_at,favorite_count,retweet_count,ttype,parent_id,source):
-		print tweet_id
 		added_at_delta = self.get_utc_now_delta()
 		created_at_delta = self.convert_to_timedelta(created_at)
 
-		query = 'INSERT INTO Tweet VALUES (?,?,?,?,?,?,?,?,?,?,?);'
+		query = 'INSERT OR IGNORE INTO Tweet VALUES (?,?,?,?,?,?,?,?,?,?,?);'
 		values = (tweet_id,text,parent_text,added_at_delta,None,created_at_delta,favorite_count,retweet_count,ttype,parent_id,source)
 
 		self.execute_and_commit(query,values)
@@ -104,7 +103,7 @@ class Database:
 	tweet_id,user_id: int
 	'''
 	def insert_tweetuser(self,tweet_id,user_id):
-		query = 'INSERT INTO TweetUser VALUES (?,?);'
+		query = 'INSERT OR IGNORE INTO TweetUser VALUES (?,?);'
 		values = (tweet_id,user_id)
 
 		self.execute_and_commit(query,values)
@@ -118,16 +117,6 @@ class Database:
 		values = (tweet_id,entity_type,entity_value)
 
 		self.execute_and_commit(query,values)
-
-	'''
-	user_id: int
-	'''
-	def user_exists(self,user_id):
-		query = 'SELECT COUNT(1) FROM User WHERE user_id=?;'
-		values = (user_id,)
-
-		result = self.execute_and_commit(query,values)[0]
-		return result[0] > 0
 
 	'''
 	tweet_id: int
@@ -175,7 +164,7 @@ class Database:
 		SELECT_ALL_USERS = 'SELECT user_id FROM User;'
 		SELECT_PENDING_USERS = 'SELECT user_id FROM UserFollowerProgress WHERE status=?'
 
-		if resume_pass and self.pass_in_progress():
+		if resume_pass and self.follower_pass_in_progress():
 			self.current_pass = self.execute_and_commit(GET_CURRENT_PASS)[0][0]
 			pending_users = self.execute_and_commit(SELECT_PENDING_USERS,(self.PENDING,))
 			return pending_users
@@ -274,7 +263,7 @@ class Database:
 		SELECT_ALL_USERS = 'SELECT user_id FROM User;'
 		SELECT_PENDING_USERS = 'SELECT user_id FROM UserFriendProgress WHERE status=?'
 
-		if resume_pass and self.pass_in_progress():
+		if resume_pass and self.friend_pass_in_progress():
 			self.current_pass = self.execute_and_commit(GET_CURRENT_PASS)[0][0]
 			pending_users = self.execute_and_commit(SELECT_PENDING_USERS,(self.PENDING,))
 			return pending_users
@@ -322,7 +311,6 @@ class Database:
 			raise ex
 
 
-
 	def update_userfriend_relations(self,user_id,friend_ids,started_at_delta,unavailable,capped_at=None):
 		REMOVE_OLD_FRIEND_RELATIONS = 'DELETE FROM UserFriend WHERE user_id=?;'
 		INSERT_USERFRIEND = 'INSERT INTO UserFriend VALUES (?,?);'
@@ -356,4 +344,18 @@ class Database:
 
 		result = self.execute_and_commit(query,values)
 		return result[0][0] > 0
+
+	'''
+	***
+	Calculating shared friends and followers
+	***
+	'''
+
+	def calculate_sharedfollowers(self):
+		query = open('sharedfriends.sql').read()
+		self.execute_and_commit(query,())
+
+	def calculate_sharedfriends(self):
+		query = open('sharedfriends.sql').read()
+		self.execute_and_commit(query,())
 

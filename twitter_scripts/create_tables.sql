@@ -115,3 +115,25 @@ CREATE TABLE UserFriendProgress (
 	FOREIGN KEY(pass) REFERENCES FriendPasses(pass),
 	PRIMARY KEY(user_id,pass)
 );
+
+DROP TABLE IF EXISTS SharedFollowers;
+CREATE TABLE SharedFollowers (
+	user1_id INTEGER,
+	user2_id INTEGER,
+	follower_union INTEGER,
+	follower_intersection INTEGER,
+	weight REAL,
+	FOREIGN KEY(user1_id) REFERENCES User(user_id),
+	FOREIGN KEY(user2_id) REFERENCES User(user_id)
+);
+
+DROP TABLE IF EXISTS SharedFriends;
+CREATE TABLE SharedFriends (
+	user1_id INTEGER,
+	user2_id INTEGER,
+	friend_union INTEGER,
+	friend_intersection INTEGER,
+	weight REAL,
+	FOREIGN KEY(user1_id) REFERENCES User(user_id),
+	FOREIGN KEY(user2_id) REFERENCES User(user_id)
+);

@@ -3,7 +3,11 @@ import sys
 import time
 import tweepy
 
-CAP = 500
+'''
+Usage: python update_followers.py twitter_config.txt DATABASE.db
+'''
+
+CAP = 1500
 ABORT_WHEN_INTERRUPTED = False
 
 def authenticate():
@@ -21,6 +25,7 @@ def authenticate():
 	return api
 
 def get_follower_ids_from_id(uid,api):
+	print uid
 	ids = []
 	try:
 		for page in tweepy.Cursor(api.followers_ids, id=uid).pages():
