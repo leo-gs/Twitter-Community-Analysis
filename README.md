@@ -17,14 +17,14 @@ The script used to create these tables is `create_tables.sql`.
 
 Follower and Following Relations
 =
-- To get follower relations: run the command `python update_followers.py config/twitter_config.txt DATABASE.db`.  This will populate the **UserFollower** table in the database which maps user ids to follower ids, as well as UserFollowerProgress, and FollowerPasses, which store information about when user-follower relations are updated.  `CAP` in `update_followers.py` can be set to the maximum number of followers gathered for each users.  This is helpful for when some users have lots of followers.  `ABORT_WHEN_INTERRUPTED` should be set to `False` if you want to pause your session with a `KeyboardInterrupt`.  If set to `True`, it will start over when interrupted.
+- To get follower relations: run the command `python update_followers.py config/twitter_config.txt DATABASE.db`.  This will populate the **UserFollower** table in the database which maps user ids to follower ids, as well as **UserFollowerProgress**, and **FollowerPasses**, which store information about when user-follower relations are updated.  `CAP` in `update_followers.py` can be set to the maximum number of followers gathered for each users.  This is helpful for when some users have lots of followers.  `ABORT_WHEN_INTERRUPTED` should be set to `False` if you want to pause your session with a `KeyboardInterrupt`.  If set to `True`, it will start over when interrupted.
 - The instructions for the friend relations are the same as those for the follower relations above.
 - These can take a really long time because of rate limiting.
 
 Calculating similarity (Jaccard index) of  users' friends and followers.
 =
-Run the command `python calculate_sharedfollowers.py DATABASE.db`.  As long as user-follower relations have already been retrieved, this will populate the table `SharedFollowers` with the union size, intersection size, and Jaccard index of any two users' sets of followers (as long as the size of the union is greater than 0).
-Similarly, `python calculate_sharedfriends.py DATABASE.db` will populate `SharedFriends`.
+Run the command `python calculate_sharedfollowers.py DATABASE.db`.  As long as user-follower relations have already been retrieved, this will populate the table **SharedFollowers** with the union size, intersection size, and Jaccard index of any two users' sets of followers (as long as the size of the union is greater than 0).
+Similarly, `python calculate_sharedfriends.py DATABASE.db` will populate **SharedFriends**.
 
 Updating Retweet and Favorite Counts
 =
