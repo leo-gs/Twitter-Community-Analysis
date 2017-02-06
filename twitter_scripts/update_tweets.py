@@ -3,6 +3,7 @@ import database
 import csv
 import json
 import sys
+import time
 import urllib
 import urllib2
 
@@ -34,7 +35,12 @@ def make_request(access_token, ids):
 	twitter_request_parameters = {'id':','.join(ids), 'map':'true'}
 
 	twitter_request = urllib2.Request(twitter_endpoint + '?' + urllib.urlencode(twitter_request_parameters), headers = twitter_request_headers)
-	twitter_response = json.load(urllib2.urlopen(twitter_request))
+	twitter_response = None
+	try:
+		twitter_response = json.load(urllib2.urlopen(twitter_request))
+	except urllib2.HTTPError:
+		time.sleep(15*60)
+		twitter_response = json.load(urllib2.urlopen(twitter_request))
 
 	return twitter_response
 
@@ -47,6 +53,7 @@ end_index = 100
 db = database.Database(sys.argv[2])
 tweet_ids = [str(elt[0]) for elt in db.select_data(SQL_QUERY)]
 
+progress = 0
 while start_index < len(tweet_ids):
 	if end_index > len(tweet_ids):
 		end_index = len(tweet_ids)
@@ -54,10 +61,11 @@ while start_index < len(tweet_ids):
 	for tweet_id, tweet_data in response['id'].items():
 		retweet_count,favorite_count = None,None
 		if tweet_data != None:
-			print tweet_data['favorite_count']
 			retweet_count = tweet_data['retweet_count']
 			favorite_count = tweet_data['favorite_count']
 			db.update_tweet(tweet_id,retweet_count,favorite_count)
+		progress += 1
+		sys.stdout.write('\r' + ('%.2f' % ((100.0*progress)/len(tweet_ids))) + '%\t')
 	start_index = end_index
 	end_index += 100
 

@@ -9,7 +9,7 @@ class Database:
 	ABORTED = 'aborted'
 
 	def __init__(self,name):
-		self.conn = sqlite3.connect(name)
+		self.conn = sqlite3.connect('collections/' + name)
 		self.cursor = self.conn.cursor()
 
 		if not self.check_if_tables_created():
@@ -21,7 +21,7 @@ class Database:
 		return self.execute_and_commit(query,values)[0][0] > 0
 
 	def create_tables(self):
-		queries = open('create_tables.sql').read().split(';')
+		queries = open('sql/create_tables.sql').read().split(';')
 		for query in queries:
 			self.execute_and_commit(query + ';', ())
 
@@ -161,8 +161,8 @@ class Database:
 		NEW_PASS = 'INSERT INTO FollowerPasses VALUES (?,?,?);'
 		GET_CURRENT_PASS = 'SELECT MAX(pass) FROM FollowerPasses;'
 		INSERT_USER_TO_START = 'INSERT INTO UserFollowerProgress VALUES (?,?,?,?,?,?,?,?);'
-		SELECT_ALL_USERS = 'SELECT user_id FROM User;'
-		SELECT_PENDING_USERS = 'SELECT user_id FROM UserFollowerProgress WHERE status=?'
+		SELECT_ALL_USERS = 'SELECT user_id FROM TweetUser GROUP BY user_id ORDER BY COUNT(*) DESC;'
+		SELECT_PENDING_USERS = 'SELECT UserFollowerProgress.user_id FROM UserFollowerProgress, TweetUser WHERE UserFollowerProgress.user_id=TweetUser.user_id AND UserFollowerProgress.status=? GROUP BY TweetUser.user_id ORDER BY COUNT(*) DESC;'
 
 		if resume_pass and self.follower_pass_in_progress():
 			self.current_pass = self.execute_and_commit(GET_CURRENT_PASS)[0][0]
@@ -352,10 +352,28 @@ class Database:
 	'''
 
 	def calculate_sharedfollowers(self):
-		query = open('sharedfriends.sql').read()
+		query = open('sql/sharedfollowers.sql').read()
 		self.execute_and_commit(query,())
 
 	def calculate_sharedfriends(self):
-		query = open('sharedfriends.sql').read()
+		query = open('sq/sharedfriends.sql').read()
 		self.execute_and_commit(query,())
+
+	'''
+	***
+	Getting information about data
+	***
+	'''
+
+	def count_users(self):
+		query = 'SELECT COUNT(*) FROM User;'
+
+		result = self.execute_and_commit(query)
+		return result[0][0]
+
+	def count_tweets(self):
+		query = 'SELECT COUNT(*) FROM Tweet;'
+
+		result = self.execute_and_commit(query)
+		return result[0][0]
 

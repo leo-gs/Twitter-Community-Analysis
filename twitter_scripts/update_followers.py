@@ -7,7 +7,7 @@ import tweepy
 Usage: python update_followers.py twitter_config.txt DATABASE.db
 '''
 
-CAP = 1500
+CAP = 1000000
 ABORT_WHEN_INTERRUPTED = False
 
 def authenticate():
@@ -35,7 +35,7 @@ def get_follower_ids_from_id(uid,api):
 				return ids[:CAP]
 	except tweepy.RateLimitError:
 		time.sleep(15*60)
-		ids = get_follower_ids_from_id(uid)
+		ids = get_follower_ids_from_id(uid,api)
 	return ids
 
 def run():

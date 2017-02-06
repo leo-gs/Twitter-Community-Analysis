@@ -108,5 +108,3 @@ def run():
 	except KeyboardInterrupt:
 		database.close()
 		quit()
-
-run()
