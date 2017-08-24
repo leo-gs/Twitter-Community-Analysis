@@ -1,16 +1,16 @@
 import base64
-import database
 import datetime
 import json
 import Queue
 import threading
 import requests
 import sqlite3
+import sqlite_database
 import sys
 import tweepy
 
 '''
-Usage: python stream_by_keywords.py config.txt output_database.db keywords.txt
+Usage: python stream_by_keywords.py twitter_config.txt output_database_config.txt keywords.txt
 '''
 
 INPUT_TERMS = open(sys.argv[3]).read().split()
@@ -40,7 +40,7 @@ def parse_tweet_type(tweet):
 	if tweet.in_reply_to_user_id:
 		return ('reply',tweet.in_reply_to_status_id,None)
 	elif tweet.is_quote_status and hasattr(tweet,'quoted_status'):
-		return ('quote',tweet.quoted_status.id,tweet.quoted_status.text)
+		return ('quote',tweet.quoted_status_id,tweet.quoted_status['text'])
 	elif hasattr(tweet,'retweeted_status'):
 		return ('retweet',tweet.retweeted_status.id,tweet.retweeted_status.text)
 	else:
@@ -92,7 +92,7 @@ def insert_user(user,db):
 class TweetProcessor():
 
 	def process(self):
-		self.db = database.Database(sys.argv[2])
+		self.db = sqlite_database.Database(sys.argv[2])
 		self.keep_running = True
 
 		while self.keep_running:
