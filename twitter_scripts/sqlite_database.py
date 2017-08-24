@@ -9,7 +9,7 @@ class Database:
 	ABORTED = 'aborted'
 
 	def __init__(self,name):
-		self.conn = sqlite3.connect('collections/' + name)
+		self.conn = sqlite3.connect(name)
 		self.cursor = self.conn.cursor()
 
 		if not self.check_if_tables_created():
